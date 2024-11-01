@@ -3,6 +3,7 @@ package db
 import (
     "database/sql"
     "fmt"
+    "strings"
     _ "github.com/lib/pq"
 )
 
@@ -19,7 +20,7 @@ func NewDBManager(host, port, user, password, dbName string) (*DBManager, error)
         return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
     }
 
-    // Create database if it doesn’t exist
+    // Try to create the database
     _, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
     if err != nil && !isDatabaseExistsError(err) {
         return nil, fmt.Errorf("failed to create database: %w", err)
@@ -34,9 +35,9 @@ func NewDBManager(host, port, user, password, dbName string) (*DBManager, error)
     return &DBManager{db: db}, nil
 }
 
-// isDatabaseExistsError checks if an error is due to an already existing database
+// isDatabaseExistsError checks if the error indicates the database already exists
 func isDatabaseExistsError(err error) bool {
-    return err.Error() == "ERROR: database already exists (SQLSTATE 42P04)"
+    return strings.Contains(err.Error(), "already exists")
 }
 
 // DB returns the database connection

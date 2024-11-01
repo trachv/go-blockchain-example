@@ -7,6 +7,7 @@ import (
     "blockchain-portfolio/internal/tracker"
     "fmt"
     "log"
+    "time"
 )
 
 func main() {
@@ -32,19 +33,45 @@ func main() {
     // Initialize Tracker with the database connection
     track := tracker.NewTracker(dbManager.DB())
 
-    address := cfg.WalletAddress
-    token := cfg.TokenAddress
+    // Define the interval for balance checks (e.g., every 10 minutes)
+    interval := time.Minute * 1
+    ticker := time.NewTicker(interval)
+    defer ticker.Stop()
 
+    // Channel to handle graceful shutdown
+    done := make(chan bool)
+
+    // Goroutine to execute balance checks periodically
+    go func() {
+        for {
+            select {
+            case <-done:
+                return
+            case <-ticker.C:
+                // Fetch balance and record it in the database
+                checkAndRecordBalance(client, track, cfg.WalletAddress, cfg.TokenAddress)
+            }
+        }
+    }()
+
+    // Block the main thread until an interrupt signal is received
+    select {}
+}
+
+// checkAndRecordBalance fetches and records the balance of the specified address and token
+func checkAndRecordBalance(client *blockchain.Client, track *tracker.Tracker, address, token string) {
     // Get balance
     balance, err := client.GetERC20Balance(token, address)
     if err != nil {
-        log.Fatalf("Failed to get ERC20 balance: %v", err)
+        log.Printf("Failed to get ERC20 balance: %v", err)
+        return
     }
 
     // Record balance in PostgreSQL
     err = track.RecordBalance(address, token, balance.Int64())
     if err != nil {
-        log.Fatalf("Failed to record balance: %v", err)
+        log.Printf("Failed to record balance: %v", err)
+        return
     }
 
     fmt.Printf("Balance recorded: %s for address %s\n", balance.String(), address)
