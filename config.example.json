@@ -1,5 +1,10 @@
 {
 	"rpcURL": "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
 	"walletAddress": "0xYourWalletAddress",
-	"tokenAddress": "0xYourTokenAddress"
+	"tokenAddress": "0xYourTokenAddress",
+	"dbURL": "localhost",
+	"dbUser": "admin",
+	"dbPassword": "admin",
+	"dbName": "postgres",
+	"dbPort": "5432"
 }
