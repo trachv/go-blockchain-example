@@ -4,6 +4,7 @@ import (
     "database/sql"
     "fmt"
     "strings"
+
     _ "github.com/lib/pq"
 )
 
@@ -20,16 +21,29 @@ func NewDBManager(host, port, user, password, dbName string) (*DBManager, error)
         return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
     }
 
-    // Try to create the database
+    // Check the connection
+    if err := db.Ping(); err != nil {
+        db.Close()
+        return nil, fmt.Errorf("failed to ping PostgreSQL: %w", err)
+    }
+
+    // Try to create the database if it doesn't exist
     _, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
     if err != nil && !isDatabaseExistsError(err) {
+        db.Close()
         return nil, fmt.Errorf("failed to create database: %w", err)
     }
 
-    // Connect to the created or existing database
+    // Connect to the specific database
     db, err = sql.Open("postgres", fmt.Sprintf("%s dbname=%s", connStr, dbName))
     if err != nil {
         return nil, fmt.Errorf("failed to connect to the database: %w", err)
+    }
+
+    // Check the connection to the specific database
+    if err := db.Ping(); err != nil {
+        db.Close()
+        return nil, fmt.Errorf("failed to ping database %s: %w", dbName, err)
     }
 
     return &DBManager{db: db}, nil
@@ -43,4 +57,12 @@ func isDatabaseExistsError(err error) bool {
 // DB returns the database connection
 func (d *DBManager) DB() *sql.DB {
     return d.db
+}
+
+// Close closes the database connection
+func (d *DBManager) Close() error {
+    if d.db != nil {
+        return d.db.Close()
+    }
+    return nil
 }
