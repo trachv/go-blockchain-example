@@ -1,5 +1,10 @@
 {
-	"rpcURL": "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
+	"networks": [
+		{
+			"name": "Ethereum Mainnet",
+			"rpcURL": "https://mainnet.infura.io/v3/be1d389db7f348cabd2391bcd0dd9763"
+		}
+	],
 	"walletAddress": ["0xYourWalletAddress"],
 	"tokenAddress": ["0xYourTokenAddress"],
 	"dbURL": "localhost",
